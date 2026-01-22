@@ -1,5 +1,6 @@
 #include "bigint.hpp"
 #include <string>
+#include <sstream>
 
 bigint::bigint() : str("0") {}
 
@@ -42,7 +43,7 @@ std::string& padding(const std::string& base, std::string& pad)
     if (len2 < len1)
     {
         for (int i = 0; i < len1 - len2; i++)
-            pad.push_back('0');           
+            pad.push_back('0');
     }
     return (pad);
 }
@@ -56,7 +57,7 @@ bigint  bigint::operator+(const bigint& other)const
     std::string str2 = reverse(other.str);
     str1 = padding(str2, str1);
     str2 = padding(str1, str2);
-    for (int i = 0; i < str1.length(); i++)
+    for (size_t i = 0; i < str1.length(); i++)
     {
         int sum = str1[i] - '0' + str2[i] - '0' + carry;
         if (sum > 9)
@@ -93,4 +94,111 @@ bigint  bigint::operator++(int)
     bigint  temp(*this);
     (*this) = (*this) + bigint(1);
     return (temp);
+}
+
+bigint  bigint::operator<<(unsigned int num)const
+{
+	bigint	ret(*this);
+	for (size_t i = 0; i < num; i++)
+		ret.str.push_back('0');
+	return (ret);
+}
+
+bigint& bigint::operator<<=(unsigned int num)
+{
+	(*this) = (*this) << num;
+	return (*this);
+}
+
+bigint  bigint::operator>>(unsigned int num)const
+{
+	bigint	ret(*this);
+	if (num == 0)
+		return (ret);
+	if (ret.str.length() <= num)
+		ret.str = "0";
+	else
+		ret.str.erase(ret.str.length()-num);
+	return (ret);
+}
+
+bigint& bigint::operator>>=(unsigned int num)
+{
+	(*this) = (*this) >> num;
+	return (*this);
+}
+
+unsigned int	toUint(std::string str)
+{
+	std::stringstream ss(str);
+	unsigned int	n;
+	ss >> n;
+	return (n);
+}
+
+bigint  bigint::operator<<(const bigint& other)const
+{
+	bigint	ret;
+	ret = (*this) << toUint(other.str);
+	return (ret);
+}
+
+bigint  bigint::operator>>(const bigint& other)const
+{
+	bigint	ret;
+	ret = (*this) >> toUint(other.str);
+	return (ret);
+}
+
+bigint& bigint::operator<<=(const bigint& other)
+{
+	(*this) = (*this) << toUint(other.str);
+	return (*this);
+}
+
+bigint& bigint::operator>>=(const bigint& other)
+{
+	(*this) = (*this) >> toUint(other.str);
+	return (*this);
+}
+
+bool    bigint::operator==(const bigint& other)const
+{
+	if (str == other.str)
+		return (true);
+	return (false);
+}
+
+bool    bigint::operator!=(const bigint& other)const
+{
+	return (!((*this) == other));
+}
+
+bool    bigint::operator<(const bigint& other)const
+{
+	if (str.length() < other.str.length())
+		return (true);
+	else if (str.length() > other.str.length())
+		return (false);
+	else
+	{
+		if (str < other.str)
+			return (true);
+		return (false);
+	}
+}
+
+bool    bigint::operator>(const bigint& other)const
+{
+	return (other < (*this));
+}
+
+bool    bigint::operator>=(const bigint& other)const
+{
+	return (!((*this) < other));
+}
+
+bool    bigint::operator<=(const bigint& other)const
+{
+	return (!(other < (*this)));
 }
