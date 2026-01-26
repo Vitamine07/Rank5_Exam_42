@@ -2,7 +2,7 @@
 
 int	read_chars(FILE *file, t_map *map)
 {
-	if (fscanf(file, "%d%c%c%c", &map->hei, &map->chars.empty, &map->chars.obstacle, &map->chars.full) != 4)
+	if (fscanf(file, "%d%c%c%c\n", &map->hei, &map->chars.empty, &map->chars.obstacle, &map->chars.full) != 4)
 		return (1);
 	if (map->hei <= 0)
 		return (1);
@@ -69,15 +69,77 @@ int	read_map(FILE *file, t_map *map)
 	return (0);
 }
 
+int	min(int n1, int n2, int n3)
+{
+	int	min;
+	min = n1;
+	if (n2 < min)
+		min = n2;
+	if (n3 < min)
+		min = n3;
+	return (min);
+}
+
+void	find_bsq(t_map *map, t_sq *bsq)
+{
+	int	arr[map->hei][map->wid];
+	for (int i = 0; i < map->hei; i++)
+	{
+		for (int j = 0; j < map->wid; j++)
+			arr[i][j] = 0;
+	}
+	for (int i = 0; i < map->hei; i++)
+	{
+		for (int j = 0; j < map->wid; j++)
+		{
+			if (i == 0 || j == 0)
+				arr[i][j] = 1;
+			else if (map->grid[i][j] == map->chars.obstacle)
+				arr[i][j] = 0;
+			else
+				arr[i][j] = min(arr[i-1][j], arr[i-1][j-1], arr[i][j-1]) + 1;
+			if (arr[i][j] > bsq->size)
+			{
+				bsq->size = arr[i][j];
+				bsq->x = i - bsq->size + 1;
+				bsq->y = j - bsq->size + 1;
+			}
+		}
+	}
+}
+
+void	print_bsq(t_map *map, t_sq *bsq)
+{
+	for (int i = bsq->x; i < bsq->x + bsq->size; i++)
+	{
+		for (int j = bsq->y; j < bsq->y + bsq->size; j++)
+		{
+			map->grid[i][j] = map->chars.full;
+		}
+	}
+	for (int i = 0; i < map->hei; i++)
+	{
+		fputs(map->grid[i], stdout);
+		fputc('\n', stdout);
+	}
+}
+
 int	main(int ac, char **av)
 {
 	t_map	map;
+	t_sq	bsq;
 	FILE	*file;
 
 	if (ac == 1)
 	{
-		if (!read_map(stdin, &map))
+		if (read_map(stdin, &map))
 			fprintf(stderr, "Map error");
+		bsq.size = 0;
+		bsq.x = 0;
+		bsq.y = 0;
+		find_bsq(&map, &bsq);
+		print_bsq(&map, &bsq);
+		free_grid(&map);
 	}
 	else
 	{
@@ -86,16 +148,20 @@ int	main(int ac, char **av)
 			file = fopen(av[i], "r");
 			if (!file)
 				fprintf(stderr, "Map error");
-			if (!read_map(file, &map))
+			if (read_map(file, &map))
 			{
 				fprintf(stderr, "Map error");
 				fclose(file);
 			}
-			find_bsq();
-			print_bsq();
+			bsq.size = 0;
+			bsq.x = 0;
+			bsq.y = 0;
+			find_bsq(&map, &bsq);
+			print_bsq(&map, &bsq);
+			free_grid(&map);
 			fclose(file);
-			fputc(stderr, "\n");
+			fputc('\n', stdout);
 		}
 	}
-
+	return (0);
 }
