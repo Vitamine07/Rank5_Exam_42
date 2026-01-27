@@ -38,13 +38,14 @@ int	read_map(FILE *file, t_map *map)
 
 	if (read_chars(file, map))
 		return (1);
-	map->grid = malloc(map->hei * sizeof(char*));
+	map->grid = malloc((map->hei+1) * sizeof(char*));
 	if (!map->grid)
 		return (1);
+	map->grid[map->hei] = NULL;
 	for (int i = 0; i < map->hei; i++)
 	{
 		bytes = getline(&line, &len, file);
-		if (bytes == -1)
+		if (bytes <= 1)
 			return (free_grid(map), free(line), 1);
 		if (line[bytes - 1] != '\n')
 			return (free_grid(map), free(line), 1);
@@ -52,12 +53,13 @@ int	read_map(FILE *file, t_map *map)
 			map->wid = bytes - 1;
 		else
 		{
-			if (map->wid < 1 || bytes - 1 != map->wid)
+			if (bytes - 1 != map->wid)
 				return (free(line), free_grid(map), 1);
 		}
-		map->grid[i] = malloc(map->wid * sizeof(char));
+		map->grid[i] = malloc((map->wid+1) * sizeof(char));
 		if (!map->grid[i])
 			return (free_grid(map), free(line), 1);
+		map->grid[i][map->wid] = 0;
 		for (int j = 0; j < map->wid; j++)
 		{
 			if (line[j] != map->chars.empty && line[j] != map->chars.obstacle)
@@ -83,6 +85,10 @@ int	min(int n1, int n2, int n3)
 void	find_bsq(t_map *map, t_sq *bsq)
 {
 	int	arr[map->hei][map->wid];
+
+	bsq->size = 0;
+	bsq->x = 0;
+	bsq->y = 0;
 	for (int i = 0; i < map->hei; i++)
 	{
 		for (int j = 0; j < map->wid; j++)
@@ -92,10 +98,10 @@ void	find_bsq(t_map *map, t_sq *bsq)
 	{
 		for (int j = 0; j < map->wid; j++)
 		{
-			if (i == 0 || j == 0)
-				arr[i][j] = 1;
-			else if (map->grid[i][j] == map->chars.obstacle)
+			if (map->grid[i][j] == map->chars.obstacle)
 				arr[i][j] = 0;
+			else if (i == 0 || j == 0)
+				arr[i][j] = 1;
 			else
 				arr[i][j] = min(arr[i-1][j], arr[i-1][j-1], arr[i][j-1]) + 1;
 			if (arr[i][j] > bsq->size)
@@ -120,7 +126,7 @@ void	print_bsq(t_map *map, t_sq *bsq)
 	for (int i = 0; i < map->hei; i++)
 	{
 		fputs(map->grid[i], stdout);
-		fputc('\n', stdout);
+		fputs("\n", stdout);
 	}
 }
 
@@ -133,35 +139,30 @@ int	main(int ac, char **av)
 	if (ac == 1)
 	{
 		if (read_map(stdin, &map))
-			fprintf(stderr, "Map error");
-		bsq.size = 0;
-		bsq.x = 0;
-		bsq.y = 0;
+			fprintf(stdout, "Error: invalid map\n");
 		find_bsq(&map, &bsq);
 		print_bsq(&map, &bsq);
 		free_grid(&map);
 	}
+	else if (ac == 2)
+	{
+		file = fopen(av[1], "r");
+		if (!file)
+			fprintf(stdout, "Error: invalid map\n");
+		if (read_map(file, &map))
+		{
+			fprintf(stdout, "Error: invalid map\n");
+			fclose(file);
+		}
+		find_bsq(&map, &bsq);
+		print_bsq(&map, &bsq);
+		free_grid(&map);
+		fclose(file);
+	}
 	else
 	{
-		for (int i = 1; i < ac; i++)
-		{
-			file = fopen(av[i], "r");
-			if (!file)
-				fprintf(stderr, "Map error");
-			if (read_map(file, &map))
-			{
-				fprintf(stderr, "Map error");
-				fclose(file);
-			}
-			bsq.size = 0;
-			bsq.x = 0;
-			bsq.y = 0;
-			find_bsq(&map, &bsq);
-			print_bsq(&map, &bsq);
-			free_grid(&map);
-			fclose(file);
-			fputc('\n', stdout);
-		}
+		fprintf(stdout, "Error: invalid map\n");
+		return (1);
 	}
 	return (0);
 }
