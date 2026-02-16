@@ -1,6 +1,6 @@
-#ifndef LIFE_H
-#define LIFE_H
-
+//#ifndef LIFE_H
+//#define LIFE_H
+#pragma once 
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -16,7 +16,6 @@ typedef	struct s_game
 	int		draw;
 } t_game;
 
-#endif
 
 // Assignment name : life
 // Expected files : *.c *.h
